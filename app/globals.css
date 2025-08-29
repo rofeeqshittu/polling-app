@@ -12,14 +12,24 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/* Force light theme */
+html {
+  color-scheme: light;
+}
+
 body {
-  background: #ffffff;
-  color: #171717;
+  background: #ffffff !important;
+  color: #171717 !important;
   font-family: Arial, Helvetica, sans-serif;
 }
 
 /* Ensure all pages have light background */
 #__next {
-  background: #ffffff;
+  background: #ffffff !important;
   min-height: 100vh;
+}
+
+/* Override any potential dark backgrounds */
+* {
+  color-scheme: light;
 }
