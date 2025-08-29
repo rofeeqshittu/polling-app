@@ -1,27 +1,29 @@
 import { NextRequest, NextResponse } from "next/server"
+import { createServerClient } from "@/lib/supabase"
 import { LoginRequest, ApiResponse } from "@/types"
 
 export async function POST(request: NextRequest) {
   try {
     const body: LoginRequest = await request.json()
+    const supabase = createServerClient()
     
-    // TODO: Implement actual authentication logic
-    // - Validate credentials against database
-    // - Generate JWT token
-    // - Set secure cookies
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: body.email,
+      password: body.password,
+    })
     
-    console.log("Login attempt:", body)
+    if (error) {
+      const response: ApiResponse<null> = {
+        success: false,
+        error: error.message
+      }
+      return NextResponse.json(response, { status: 400 })
+    }
     
-    // Mock response for now
-    const response: ApiResponse<{ token: string; user: any }> = {
+    const response: ApiResponse<{ user: any }> = {
       success: true,
       data: {
-        token: "mock-jwt-token",
-        user: {
-          id: "1",
-          email: body.email,
-          name: "John Doe"
-        }
+        user: data.user
       },
       message: "Login successful"
     }

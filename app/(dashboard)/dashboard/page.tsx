@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Plus, BarChart3, Users, TrendingUp, Clock } from "lucide-react"
 import Link from "next/link"
+import { ProtectedRoute } from "@/components/auth/protected-route"
 
 // Mock data for demonstration
 const mockUserPolls = [
@@ -58,7 +59,8 @@ export default function DashboardPage() {
   const activePolls = mockUserPolls.filter(poll => poll.isActive).length
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <ProtectedRoute>
+      <div className="container mx-auto px-4 py-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -185,6 +187,6 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
-    </div>
+    </ProtectedRoute>
   )
 } 

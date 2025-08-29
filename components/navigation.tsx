@@ -4,14 +4,14 @@ import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { BarChart3, Menu, X, User, LogOut } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
 
 export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
-  // TODO: Replace with actual auth state
-  const isAuthenticated = true
-  const user = { name: "John Doe", email: "john@example.com" }
+  const { user, signOut, loading } = useAuth()
+  const isAuthenticated = !!user
 
   const navigationItems = [
     { name: "My Polls", href: "/polls" },
@@ -56,10 +56,10 @@ export function Navigation() {
                 
                 {isUserMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
-                    <div className="px-4 py-2 text-sm text-gray-700 border-b">
-                      <p className="font-medium">{user.name}</p>
-                      <p className="text-gray-500">{user.email}</p>
-                    </div>
+                                    <div className="px-4 py-2 text-sm text-gray-700 border-b">
+                  <p className="font-medium">{user.user_metadata?.full_name || user.email}</p>
+                  <p className="text-gray-500">{user.email}</p>
+                </div>
                     <Link
                       href="/dashboard"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -68,8 +68,8 @@ export function Navigation() {
                     </Link>
                     <button
                       onClick={() => {
-                        // TODO: Implement logout
-                        console.log("Logout clicked")
+                        signOut()
+                        setIsUserMenuOpen(false)
                       }}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
@@ -125,7 +125,7 @@ export function Navigation() {
               {isAuthenticated ? (
                 <div className="pt-4 border-t">
                   <div className="px-3 py-2 text-sm text-gray-500">
-                    Signed in as {user.name}
+                    Signed in as {user.user_metadata?.full_name || user.email}
                   </div>
                   <Link
                     href="/dashboard"
@@ -134,16 +134,15 @@ export function Navigation() {
                   >
                     Dashboard
                   </Link>
-                  <button
-                    onClick={() => {
-                      // TODO: Implement logout
-                      console.log("Logout clicked")
-                      setIsMobileMenuOpen(false)
-                    }}
-                    className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
-                  >
-                    Sign out
-                  </button>
+                                      <button
+                      onClick={() => {
+                        signOut()
+                        setIsMobileMenuOpen(false)
+                      }}
+                      className="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                    >
+                      Sign out
+                    </button>
                 </div>
               ) : (
                 <div className="pt-4 border-t space-y-2">
