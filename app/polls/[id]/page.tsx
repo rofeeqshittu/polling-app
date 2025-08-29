@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Share2, BarChart3, Calendar, User, CheckCircle, Edit, Trash2, Copy, Twitter } from "lucide-react"
+import { ArrowLeft, Share2, BarChart3, Calendar, User, CheckCircle, Edit, Trash2, Copy, Twitter, Vote } from "lucide-react"
 import Link from "next/link"
 
 // Mock poll data - in real app this would come from API
@@ -30,13 +30,23 @@ export default function PollPage({ params }: { params: { id: string } }) {
   const [selectedOptions, setSelectedOptions] = useState<string[]>([])
   const [hasVoted, setHasVoted] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
-  const [showShareSection, setShowShareSection] = useState(false)
+  const [pollData, setPollData] = useState(mockPoll)
+  const [showResults, setShowResults] = useState(false)
 
-  const totalVotes = mockPoll.options.reduce((sum, option) => sum + option.votes, 0)
-  const isExpired = mockPoll.expiresAt && new Date(mockPoll.expiresAt) < new Date()
+  const totalVotes = pollData.options.reduce((sum, option) => sum + option.votes, 0)
+  const isExpired = pollData.expiresAt && new Date(pollData.expiresAt) < new Date()
+
+  // Check if user has already voted (in real app, check localStorage or database)
+  useEffect(() => {
+    const votedPolls = JSON.parse(localStorage.getItem('votedPolls') || '[]')
+    if (votedPolls.includes(params.id)) {
+      setHasVoted(true)
+      setShowResults(true)
+    }
+  }, [params.id])
 
   const handleOptionSelect = (optionId: string) => {
-    if (mockPoll.allowMultipleVotes) {
+    if (pollData.allowMultipleVotes) {
       setSelectedOptions(prev => 
         prev.includes(optionId) 
           ? prev.filter(id => id !== optionId)
@@ -52,14 +62,34 @@ export default function PollPage({ params }: { params: { id: string } }) {
     
     setIsLoading(true)
     
-    // TODO: Implement voting logic
-    console.log("Voting for options:", selectedOptions)
-    
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      // Simulate API call to submit vote
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Update local poll data with new votes
+      const updatedOptions = pollData.options.map(option => ({
+        ...option,
+        votes: selectedOptions.includes(option.id) ? option.votes + 1 : option.votes
+      }))
+      
+      setPollData(prev => ({ ...prev, options: updatedOptions }))
+      
+      // Mark as voted and show results
       setHasVoted(true)
+      setShowResults(true)
+      
+      // Store in localStorage (in real app, this would be in database)
+      const votedPolls = JSON.parse(localStorage.getItem('votedPolls') || '[]')
+      if (!votedPolls.includes(params.id)) {
+        localStorage.setItem('votedPolls', JSON.stringify([...votedPolls, params.id]))
+      }
+      
+      console.log("Vote submitted successfully for options:", selectedOptions)
+    } catch (error) {
+      console.error("Error submitting vote:", error)
+    } finally {
       setIsLoading(false)
-    }, 1000)
+    }
   }
 
   const copyLink = () => {
@@ -68,7 +98,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
   }
 
   const shareOnTwitter = () => {
-    const text = `Vote on "${mockPoll.title}" - ${window.location.href}`
+    const text = `Vote on "${pollData.title}" - ${window.location.href}`
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`
     window.open(url, '_blank')
   }
@@ -84,6 +114,128 @@ export default function PollPage({ params }: { params: { id: string } }) {
       console.log("Delete poll clicked")
     }
   }
+
+  const renderVotingForm = () => (
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Vote className="h-5 w-5" />
+          Cast Your Vote
+        </CardTitle>
+        <CardDescription>
+          {pollData.allowMultipleVotes 
+            ? "Select one or more options that you prefer"
+            : "Select the option that best represents your choice"
+          }
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-3">
+          {pollData.options.map((option) => (
+            <div
+              key={option.id}
+              className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                selectedOptions.includes(option.id)
+                  ? "border-blue-500 bg-blue-50"
+                  : "border-gray-200 hover:border-gray-300"
+              }`}
+              onClick={() => handleOptionSelect(option.id)}
+            >
+              <div className="flex items-center space-x-3">
+                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                  selectedOptions.includes(option.id)
+                    ? "border-blue-500 bg-blue-500"
+                    : "border-gray-300"
+                }`}>
+                  {selectedOptions.includes(option.id) && (
+                    <CheckCircle className="h-3 w-3 text-white" />
+                  )}
+                </div>
+                <span className="text-lg">{option.text}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <Button 
+          onClick={handleVote} 
+          disabled={selectedOptions.length === 0 || isLoading}
+          className="w-full"
+          size="lg"
+        >
+          {isLoading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              Submitting Vote...
+            </>
+          ) : (
+            "Submit Vote"
+          )}
+        </Button>
+      </CardContent>
+    </Card>
+  )
+
+  const renderResults = () => (
+    <Card className="mb-8">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <BarChart3 className="h-5 w-5" />
+          Poll Results
+        </CardTitle>
+        <CardDescription>
+          {hasVoted ? "Thank you for voting! Here are the current results:" : "This poll is no longer active"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          {pollData.options.map((option) => {
+            const percentage = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0
+            const isSelected = selectedOptions.includes(option.id)
+            
+            return (
+              <div key={option.id} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{option.text}</span>
+                    {isSelected && hasVoted && (
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                        Your Vote
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm text-gray-600">
+                    {option.votes} votes ({percentage.toFixed(1)}%)
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    className={`h-3 rounded-full transition-all duration-500 ${
+                      isSelected && hasVoted ? 'bg-blue-600' : 'bg-green-600'
+                    }`}
+                    style={{ width: `${percentage}%` }}
+                  />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        
+        <div className="mt-6 pt-4 border-t">
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Total votes: <span className="font-semibold">{totalVotes}</span>
+            </p>
+            {hasVoted && (
+              <p className="text-sm text-green-600 mt-1">
+                ✓ Your vote has been recorded!
+              </p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -101,8 +253,8 @@ export default function PollPage({ params }: { params: { id: string } }) {
         {/* Poll Header with Edit/Delete */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">{mockPoll.title}</h1>
-            <p className="text-lg text-gray-600">{mockPoll.description}</p>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{pollData.title}</h1>
+            <p className="text-lg text-gray-600">{pollData.description}</p>
           </div>
           <div className="flex space-x-2 ml-4">
             <Button variant="outline" onClick={handleEdit}>
@@ -116,55 +268,42 @@ export default function PollPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* Poll Card */}
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            {/* Poll Options */}
-            <div className="space-y-3 mb-6">
-              {mockPoll.options.map((option) => (
-                <div
-                  key={option.id}
-                  className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                    selectedOptions.includes(option.id)
-                      ? "border-blue-500 bg-blue-50"
-                      : "border-gray-200 hover:border-gray-300"
-                  }`}
-                  onClick={() => handleOptionSelect(option.id)}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                      selectedOptions.includes(option.id)
-                        ? "border-blue-500 bg-blue-500"
-                        : "border-gray-300"
-                    }`}>
-                      {selectedOptions.includes(option.id) && (
-                        <CheckCircle className="h-3 w-3 text-white" />
-                      )}
-                    </div>
-                    <span className="text-lg">{option.text}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Submit Button */}
-            {!hasVoted && mockPoll.isActive && !isExpired && (
-              <Button 
-                onClick={handleVote} 
-                disabled={selectedOptions.length === 0 || isLoading}
-                className="w-full"
-              >
-                {isLoading ? "Submitting..." : "Submit Vote"}
-              </Button>
-            )}
-
-            {/* Poll Metadata */}
-            <div className="flex items-center justify-between text-sm text-gray-500 mt-6 pt-4 border-t">
-              <span>Created by {mockPoll.createdBy}</span>
-              <span>Created on {mockPoll.createdAt.toLocaleDateString()}</span>
+        {/* Poll Metadata */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+              <div className="flex items-center space-x-1">
+                <User className="h-4 w-4" />
+                <span>Created by {pollData.createdBy}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Calendar className="h-4 w-4" />
+                <span>Created on {pollData.createdAt.toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <BarChart3 className="h-4 w-4" />
+                <span>{totalVotes} total votes</span>
+              </div>
+              {pollData.allowMultipleVotes && (
+                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                  Multiple votes allowed
+                </span>
+              )}
+              {isExpired && (
+                <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
+                  Poll Expired
+                </span>
+              )}
             </div>
           </CardContent>
         </Card>
+
+        {/* Voting Form or Results */}
+        {!hasVoted && pollData.isActive && !isExpired ? (
+          renderVotingForm()
+        ) : (
+          renderResults()
+        )}
 
         {/* Share Section */}
         <Card>
