@@ -22,7 +22,7 @@ export default function HomePage() {
             </h1>
             
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Pollify is the modern way to gather opinions, make decisions, and engage your community. 
+              ALX Polly is the modern way to gather opinions, make decisions, and engage your community. 
               Create beautiful polls in seconds and get real-time results.
             </p>
             
@@ -53,7 +53,7 @@ export default function HomePage() {
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
               From simple yes/no questions to complex multi-option surveys, 
-              Pollify has the tools you need to gather meaningful insights.
+              ALX Polly has the tools you need to gather meaningful insights.
             </p>
           </div>
 
@@ -141,7 +141,7 @@ export default function HomePage() {
               Ready to start gathering opinions?
             </h2>
             <p className="text-xl text-gray-600 mb-8">
-              Join thousands of users who are already using Pollify to make better decisions.
+              Join thousands of users who are already using ALX Polly to make better decisions.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" asChild>

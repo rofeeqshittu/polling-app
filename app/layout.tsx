@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navigation } from "@/components/navigation";
+import { Footer } from "@/components/footer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pollify - Create and Share Polls",
+  title: "ALX Polly - Create and Share Polls",
   description: "A modern polling application for creating, sharing, and participating in polls",
 };
 
@@ -30,6 +31,7 @@ export default function RootLayout({
       >
         <Navigation />
         <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );

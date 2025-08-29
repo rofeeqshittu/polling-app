@@ -10,13 +10,12 @@ export function Navigation() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
   // TODO: Replace with actual auth state
-  const isAuthenticated = false
+  const isAuthenticated = true
   const user = { name: "John Doe", email: "john@example.com" }
 
   const navigationItems = [
-    { name: "Polls", href: "/polls" },
+    { name: "My Polls", href: "/polls" },
     { name: "Create Poll", href: "/polls/create" },
-    { name: "Dashboard", href: "/dashboard" },
   ]
 
   return (
@@ -26,7 +25,7 @@ export function Navigation() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <BarChart3 className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">Pollify</span>
+            <span className="text-xl font-bold text-gray-900">ALX Polly</span>
           </Link>
 
           {/* Desktop Navigation */}
