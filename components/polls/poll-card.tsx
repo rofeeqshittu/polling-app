@@ -21,6 +21,7 @@ interface PollCardProps {
 
 export function PollCard({ poll, showVoteButton = true, selected, onSelect, onDelete, deleting, onVoted }: PollCardProps) {
   const [showQr, setShowQr] = React.useState(false);
+  const [copied, setCopied] = React.useState(false);
   const [selectedOptions, setSelectedOptions] = React.useState<string[]>([]);
   const [voteLoading, setVoteLoading] = React.useState(false);
   const [voteError, setVoteError] = React.useState<string | null>(null);
@@ -198,7 +199,19 @@ export function PollCard({ poll, showVoteButton = true, selected, onSelect, onDe
                 <div className="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center">
                   <h3 className="mb-2 font-semibold">Scan to Share Poll</h3>
                   <QRCode value={typeof window !== 'undefined' ? window.location.origin + `/polls/${poll.id}` : ''} style={{ height: 180, width: 180 }} />
-                  <Button className="mt-4" onClick={() => setShowQr(false)}>Close</Button>
+                  <Button
+                    className="mt-4"
+                    onClick={async () => {
+                      if (typeof window !== 'undefined') {
+                        await navigator.clipboard.writeText(window.location.origin + `/polls/${poll.id}`);
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 1500);
+                      }
+                    }}
+                  >
+                    {copied ? 'Copied!' : 'Copy URL'}
+                  </Button>
+                  <Button className="mt-2" onClick={() => setShowQr(false)}>Close</Button>
                 </div>
               </div>
             )}
