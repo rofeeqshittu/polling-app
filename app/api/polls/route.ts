@@ -58,6 +58,22 @@ export async function GET() {
       return NextResponse.json({ success: false, error: "Failed to fetch polls" }, { status: 500 });
     }
 
+    // Gather all option IDs
+    const allOptionIds = (polls || []).flatMap((poll: any) => (poll.options || []).map((option: any) => option.id));
+    let allVoteCounts: Record<string, number> = {};
+    if (allOptionIds.length > 0) {
+      const { data: votes, error: votesError } = await supabaseServiceRole
+        .from("votes")
+        .select("option_id")
+        .in("option_id", allOptionIds);
+      if (!votesError && votes) {
+        allVoteCounts = votes.reduce((acc: Record<string, number>, vote: any) => {
+          acc[vote.option_id] = (acc[vote.option_id] || 0) + 1;
+          return acc;
+        }, {});
+      }
+    }
+
     const formattedPolls: Poll[] = (polls || []).map((poll: any) => ({
       id: poll.id,
       title: poll.title,
@@ -65,7 +81,7 @@ export async function GET() {
       options: (poll.options || []).map((option: any) => ({
         id: option.id,
         text: option.text,
-        votes: option.votes || 0,
+        votes: allVoteCounts[option.id] || 0,
       })),
       createdBy: poll.user_id || "Anonymous",
       isActive: poll.is_active,
