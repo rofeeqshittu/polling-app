@@ -1,3 +1,4 @@
+  // Make onVoted accessible in handleVote
 "use client"
 
 import { Poll } from "@/types"
@@ -5,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Calendar, User, BarChart3 } from "lucide-react"
 import Link from "next/link"
+import React from "react"
 
 interface PollCardProps {
   poll: Poll
@@ -13,9 +15,55 @@ interface PollCardProps {
   onSelect?: (checked: boolean) => void
   onDelete?: () => void
   deleting?: boolean
+  onVoted?: () => void
 }
 
-export function PollCard({ poll, showVoteButton = true, selected, onSelect, onDelete, deleting }: PollCardProps) {
+export function PollCard({ poll, showVoteButton = true, selected, onSelect, onDelete, deleting, onVoted }: PollCardProps) {
+  const [selectedOptions, setSelectedOptions] = React.useState<string[]>([]);
+  const [voteLoading, setVoteLoading] = React.useState(false);
+  const [voteError, setVoteError] = React.useState<string | null>(null);
+  const [voteSuccess, setVoteSuccess] = React.useState<string | null>(null);
+  const [pollData, setPollData] = React.useState<Poll>(poll);
+
+  const canVote = poll.isActive && !(poll.expiresAt && new Date(poll.expiresAt) < new Date());
+
+  async function handleVote(e: React.FormEvent) {
+    e.preventDefault();
+    setVoteLoading(true);
+    setVoteError(null);
+    setVoteSuccess(null);
+    try {
+      const res = await fetch(`/api/polls/${poll.id}/vote`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pollId: poll.id,
+          optionIds: selectedOptions,
+          userId: poll.createdBy // or null for anonymous, adjust as needed
+        })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        setVoteError(data.error || "Failed to submit vote.");
+      } else {
+        setVoteSuccess("Vote submitted successfully!");
+        // Refresh poll data after voting
+        try {
+          const res = await fetch(`/api/polls/${poll.id}`);
+          const data = await res.json();
+          if (data.success && data.data) {
+            setPollData(data.data);
+          }
+        } catch {}
+        if (typeof onVoted === "function") {
+          onVoted();
+        }
+      }
+    } catch (err: any) {
+      setVoteError(err?.message || "Failed to submit vote.");
+    }
+    setVoteLoading(false);
+  }
   const totalVotes = poll.options.reduce((sum, option) => sum + option.votes, 0)
   const isExpired = poll.expiresAt && new Date(poll.expiresAt) < new Date()
 
@@ -57,15 +105,36 @@ export function PollCard({ poll, showVoteButton = true, selected, onSelect, onDe
             </Button>
           </div>
           {/* Poll options preview */}
-          <div className="space-y-2">
-            {poll.options.slice(0, 3).map((option) => {
-              const percentage = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0
+          <form onSubmit={handleVote} className="space-y-2">
+            {pollData.options.map((option) => {
+              const totalVotes = pollData.options.reduce((sum, o) => sum + o.votes, 0);
+              const percentage = totalVotes > 0 ? (option.votes / totalVotes) * 100 : 0;
               return (
                 <div key={option.id} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="truncate">{option.text}</span>
-                    <span className="text-muted-foreground">{option.votes} votes</span>
-                  </div>
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type={pollData.allowMultipleVotes ? "checkbox" : "radio"}
+                      name="option"
+                      value={option.id}
+                      checked={pollData.allowMultipleVotes
+                        ? selectedOptions.includes(option.id)
+                        : selectedOptions[0] === option.id}
+                      onChange={e => {
+                        if (pollData.allowMultipleVotes) {
+                          if (e.target.checked) {
+                            setSelectedOptions(prev => [...prev, option.id]);
+                          } else {
+                            setSelectedOptions(prev => prev.filter(id => id !== option.id));
+                          }
+                        } else {
+                          setSelectedOptions([option.id]);
+                        }
+                      }}
+                      disabled={!canVote || voteLoading}
+                    />
+                    <span>{option.text}</span>
+                    <span className="ml-2 text-xs text-gray-500">({option.votes} votes)</span>
+                  </label>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-blue-600 h-2 rounded-full transition-all duration-300"
@@ -73,14 +142,18 @@ export function PollCard({ poll, showVoteButton = true, selected, onSelect, onDe
                     />
                   </div>
                 </div>
-              )
+              );
             })}
-            {poll.options.length > 3 && (
-              <p className="text-sm text-muted-foreground">
-                +{poll.options.length - 3} more options
-              </p>
-            )}
-          </div>
+            <button
+              type="submit"
+              className="mt-2 w-full bg-blue-600 text-white py-2 rounded disabled:opacity-50"
+              disabled={!canVote || voteLoading || selectedOptions.length === 0}
+            >
+              {voteLoading ? "Voting..." : "Vote"}
+            </button>
+            {voteError && <div className="text-red-600 text-sm">{voteError}</div>}
+            {voteSuccess && <div className="text-green-600 text-sm">{voteSuccess}</div>}
+          </form>
           {/* ...existing code... */}
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center space-x-4">
@@ -112,15 +185,9 @@ export function PollCard({ poll, showVoteButton = true, selected, onSelect, onDe
           </div>
           {/* Action buttons */}
           <div className="flex space-x-2 pt-2">
-            {showVoteButton && poll.isActive && !isExpired ? (
-              <Button asChild className="flex-1">
-                <Link href={`/polls/${poll.id}`}>Vote Now</Link>
-              </Button>
-            ) : (
-              <Button asChild variant="outline" className="flex-1">
-                <Link href={`/polls/${poll.id}`}>View Results</Link>
-              </Button>
-            )}
+            <Button asChild variant="outline" className="flex-1">
+              <Link href={`/polls/${poll.id}`}>View Results</Link>
+            </Button>
             <Button variant="outline" size="sm">
               Share
             </Button>
