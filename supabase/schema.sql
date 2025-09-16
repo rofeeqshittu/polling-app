@@ -42,6 +42,6 @@ CREATE POLICY "options_delete" ON options FOR DELETE USING (auth.uid() = (SELECT
 
 -- Create policies for votes table
 CREATE POLICY "votes_select" ON votes FOR SELECT USING (TRUE);
-CREATE POLICY "votes_insert" ON votes FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "votes_insert" ON votes FOR INSERT WITH CHECK ((user_id IS NULL) OR (auth.uid() = user_id));
 -- No update policy for votes
 -- No delete policy for votes
