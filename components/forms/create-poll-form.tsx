@@ -1,85 +1,122 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Plus, X, Calendar } from "lucide-react"
-
+import { useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Plus, X, Calendar } from "lucide-react";
 export function CreatePollForm() {
-  const [activeTab, setActiveTab] = useState<'basic' | 'settings'>('basic')
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [options, setOptions] = useState(["", ""])
-  const [allowMultipleVotes, setAllowMultipleVotes] = useState(false)
-  const [requireLogin, setRequireLogin] = useState(true)
-  const [expiresAt, setExpiresAt] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
+  const { user } = useAuth();
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"basic" | "settings">("basic");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [options, setOptions] = useState(["", ""]);
+  const [allowMultipleVotes, setAllowMultipleVotes] = useState(false);
+  const [requireLogin, setRequireLogin] = useState(true);
+  const [expiresAt, setExpiresAt] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const addOption = () => {
-    setOptions([...options, ""])
-  }
+    setOptions([...options, ""]);
+  };
 
   const removeOption = (index: number) => {
     if (options.length > 2) {
-      setOptions(options.filter((_, i) => i !== index))
+      setOptions(options.filter((_, i) => i !== index));
     }
-  }
+  };
 
   const updateOption = (index: number, value: string) => {
-    const newOptions = [...options]
-    newOptions[index] = value
-    setOptions(newOptions)
-  }
+    const newOptions = [...options];
+    newOptions[index] = value;
+    setOptions(newOptions);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    
-    // TODO: Implement poll creation logic
-    console.log("Creating poll:", {
-      title,
-      description,
-      options: options.filter(opt => opt.trim()),
-      allowMultipleVotes,
-      requireLogin,
-      expiresAt
-    })
-    
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false)
-      // TODO: Redirect to the new poll or show success message
-    }, 1000)
-  }
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const response = await fetch("/api/polls", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          options: options.filter((opt) => opt.trim()),
+          allowMultipleVotes,
+          requireLogin,
+          expiresAt,
+          userId: user?.id || null,
+          userName: user?.email || "Anonymous",
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        setError(data.error || "Failed to create poll.");
+        return;
+      }
+      setSuccess("Poll created successfully!");
+      // Redirect to the new poll page after a short delay
+      setTimeout(() => {
+        if (data.data && data.data.id) {
+          router.push(`/polls/${data.data.id}`);
+        } else {
+          router.push("/polls");
+        }
+      }, 1200);
+    } catch (error: any) {
+      setError(error?.message || "Failed to create poll.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-3xl font-bold text-gray-900">Create New Poll</h1>
-        <Button variant="outline">Cancel</Button>
+        <Button variant="outline" type="button" onClick={() => router.push("/polls")}>Cancel</Button>
       </div>
+
+
 
       {/* Tabs */}
       <div className="flex space-x-1 mb-6 border-b">
         <button
-          onClick={() => setActiveTab('basic')}
+          onClick={() => setActiveTab("basic")}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-            activeTab === 'basic'
-              ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700'
-              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            activeTab === "basic"
+              ? "bg-blue-50 text-blue-700 border-b-2 border-blue-700"
+              : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
           }`}
         >
           Basic Info
         </button>
         <button
-          onClick={() => setActiveTab('settings')}
+          onClick={() => setActiveTab("settings")}
           className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
-            activeTab === 'settings'
-              ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-700'
-              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+            activeTab === "settings"
+              ? "bg-blue-50 text-blue-700 border-b-2 border-blue-700"
+              : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
           }`}
         >
           Settings
@@ -87,8 +124,31 @@ export function CreatePollForm() {
       </div>
 
       <form onSubmit={handleSubmit}>
+        {(error || success) && (
+          <div
+            className={`mb-4 px-4 py-3 rounded text-center font-medium flex items-center justify-center gap-2 ${
+              error
+                ? "bg-red-100 text-red-700 border border-red-300"
+                : "bg-green-100 text-green-700 border border-green-300"
+            }`}
+          >
+            {error && <span>{error}</span>}
+            {success && <span>{success}</span>}
+            <button
+              type="button"
+              className="ml-2 text-lg font-bold"
+              aria-label="Dismiss"
+              onClick={() => {
+                setError(null);
+                setSuccess(null);
+              }}
+            >
+              &times;
+            </button>
+          </div>
+        )}
         {/* Basic Info Tab */}
-        {activeTab === 'basic' && (
+        {activeTab === "basic" && (
           <Card>
             <CardHeader>
               <CardTitle>Poll Information</CardTitle>
@@ -107,7 +167,7 @@ export function CreatePollForm() {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="description">Description (Optional)</Label>
                 <Input
@@ -155,7 +215,7 @@ export function CreatePollForm() {
         )}
 
         {/* Settings Tab */}
-        {activeTab === 'settings' && (
+        {activeTab === "settings" && (
           <Card>
             <CardHeader>
               <CardTitle>Poll Settings</CardTitle>
@@ -173,9 +233,11 @@ export function CreatePollForm() {
                     onChange={(e) => setAllowMultipleVotes(e.target.checked)}
                     className="rounded border-gray-300"
                   />
-                  <Label htmlFor="allowMultipleVotes">Allow users to select multiple options</Label>
+                  <Label htmlFor="allowMultipleVotes">
+                    Allow users to select multiple options
+                  </Label>
                 </div>
-                
+
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -184,9 +246,11 @@ export function CreatePollForm() {
                     onChange={(e) => setRequireLogin(e.target.checked)}
                     className="rounded border-gray-300"
                   />
-                  <Label htmlFor="requireLogin">Require users to be logged in to vote</Label>
+                  <Label htmlFor="requireLogin">
+                    Require users to be logged in to vote
+                  </Label>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="expiresAt">Poll End Date (Optional)</Label>
                   <div className="relative">
@@ -213,5 +277,5 @@ export function CreatePollForm() {
         </div>
       </form>
     </div>
-  )
-} 
+  );
+}
