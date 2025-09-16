@@ -9,9 +9,13 @@ import Link from "next/link"
 interface PollCardProps {
   poll: Poll
   showVoteButton?: boolean
+  selected?: boolean
+  onSelect?: (checked: boolean) => void
+  onDelete?: () => void
+  deleting?: boolean
 }
 
-export function PollCard({ poll, showVoteButton = true }: PollCardProps) {
+export function PollCard({ poll, showVoteButton = true, selected, onSelect, onDelete, deleting }: PollCardProps) {
   const totalVotes = poll.options.reduce((sum, option) => sum + option.votes, 0)
   const isExpired = poll.expiresAt && new Date(poll.expiresAt) < new Date()
 
@@ -35,6 +39,23 @@ export function PollCard({ poll, showVoteButton = true }: PollCardProps) {
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
+          {/* Selection checkbox and delete button */}
+          <div className="flex items-center justify-between mb-2">
+            <input
+              type="checkbox"
+              checked={!!(typeof selected !== 'undefined' && selected)}
+              onChange={e => onSelect && onSelect(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 mr-2"
+            />
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={onDelete}
+              disabled={!!deleting}
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </Button>
+          </div>
           {/* Poll options preview */}
           <div className="space-y-2">
             {poll.options.slice(0, 3).map((option) => {
@@ -60,8 +81,7 @@ export function PollCard({ poll, showVoteButton = true }: PollCardProps) {
               </p>
             )}
           </div>
-
-          {/* Poll metadata */}
+          {/* ...existing code... */}
           <div className="flex items-center justify-between text-sm text-muted-foreground">
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-1">
@@ -90,7 +110,6 @@ export function PollCard({ poll, showVoteButton = true }: PollCardProps) {
               )}
             </div>
           </div>
-
           {/* Action buttons */}
           <div className="flex space-x-2 pt-2">
             {showVoteButton && poll.isActive && !isExpired ? (
