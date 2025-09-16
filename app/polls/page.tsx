@@ -43,6 +43,19 @@ export default function PollsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {/* Page Header and Intro */}
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Browse Polls</h1>
+        <p className="text-gray-600 max-w-xl mx-auto">
+          Discover polls created by the community. Vote, share, and see what others think!
+        </p>
+        <Button asChild className="mt-4">
+          <Link href="/polls/create">
+            <Plus className="h-4 w-4 mr-2" /> Create a New Poll
+          </Link>
+        </Button>
+      </div>
+
       {loading ? (
         <div className="text-center py-12 text-gray-500">Loading polls...</div>
       ) : error ? (
@@ -52,7 +65,7 @@ export default function PollsPage() {
       ) : polls.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {polls.map((poll: any) => (
-            <PollCard key={poll.id} poll={poll} showVoteButton={false} />
+            <PollCard key={poll.id} poll={poll} showVoteButton={false} onVoted={fetchPolls} />
           ))}
         </div>
       ) : (
