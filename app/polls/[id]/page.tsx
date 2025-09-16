@@ -33,17 +33,18 @@ export default function PollPage({ params }: { params: { id: string } }) {
   const [pollData, setPollData] = useState(mockPoll)
   const [showResults, setShowResults] = useState(false)
 
+  const { id } = require('react').use(params);
   const totalVotes = pollData.options.reduce((sum, option) => sum + option.votes, 0)
   const isExpired = pollData.expiresAt && new Date(pollData.expiresAt) < new Date()
 
   // Check if user has already voted (in real app, check localStorage or database)
   useEffect(() => {
     const votedPolls = JSON.parse(localStorage.getItem('votedPolls') || '[]')
-    if (votedPolls.includes(params.id)) {
+    if (votedPolls.includes(id)) {
       setHasVoted(true)
       setShowResults(true)
     }
-  }, [params.id])
+  }, [id])
 
   const handleOptionSelect = (optionId: string) => {
     if (pollData.allowMultipleVotes) {
