@@ -1,3 +1,9 @@
+
+
+import { NextRequest, NextResponse } from "next/server";
+import { ApiResponse, Poll } from "@/types";
+import { supabaseServiceRole } from "@/lib/supabase";
+
 export async function DELETE(request: NextRequest) {
   try {
     if (!supabaseServiceRole) {
@@ -36,10 +42,6 @@ export async function DELETE(request: NextRequest) {
   }
 }
 
-
-import { NextRequest, NextResponse } from "next/server";
-import { ApiResponse, Poll } from "@/types";
-import { supabaseServiceRole } from "@/lib/supabase";
 
 
 export async function GET() {
