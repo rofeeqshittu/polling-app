@@ -51,7 +51,7 @@ export function Navigation() {
                   className="flex items-center space-x-2"
                 >
                   <User className="h-4 w-4" />
-                  <span>{user.name}</span>
+                  <span>{user.user_metadata?.full_name || user.email}</span>
                 </Button>
                 
                 {isUserMenuOpen && (
