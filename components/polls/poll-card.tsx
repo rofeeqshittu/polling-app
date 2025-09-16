@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Calendar, User, BarChart3 } from "lucide-react"
 import Link from "next/link"
+import QRCode from "react-qr-code"
 import React from "react"
 
 interface PollCardProps {
@@ -19,6 +20,7 @@ interface PollCardProps {
 }
 
 export function PollCard({ poll, showVoteButton = true, selected, onSelect, onDelete, deleting, onVoted }: PollCardProps) {
+  const [showQr, setShowQr] = React.useState(false);
   const [selectedOptions, setSelectedOptions] = React.useState<string[]>([]);
   const [voteLoading, setVoteLoading] = React.useState(false);
   const [voteError, setVoteError] = React.useState<string | null>(null);
@@ -188,9 +190,18 @@ export function PollCard({ poll, showVoteButton = true, selected, onSelect, onDe
             <Button asChild variant="outline" className="flex-1">
               <Link href={`/polls/${poll.id}`}>View Results</Link>
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={() => setShowQr(true)}>
               Share
             </Button>
+            {showQr && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+                <div className="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center">
+                  <h3 className="mb-2 font-semibold">Scan to Share Poll</h3>
+                  <QRCode value={typeof window !== 'undefined' ? window.location.origin + `/polls/${poll.id}` : ''} style={{ height: 180, width: 180 }} />
+                  <Button className="mt-4" onClick={() => setShowQr(false)}>Close</Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
