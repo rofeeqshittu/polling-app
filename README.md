@@ -147,7 +147,14 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🙏 Acknowledgments
 
-- [Shadcn UI](https://ui.shadcn.com/) for beautiful components
-- [Radix UI](https://www.radix-ui.com/) for accessible primitives
-- [Tailwind CSS](https://tailwindcss.com/) for utility-first styling
-- [Next.js](https://nextjs.org/) for the amazing framework
+
+## 🤖 AI Usage
+
+This project leveraged a suite of AI tools throughout the development process:
+
+- **GitHub Copilot**: Used for scaffolding API routes, React components, and TypeScript types; accelerated boilerplate generation and repetitive code tasks; assisted with error handling, Supabase integration, and UI logic.
+- **Cursor & Zed**: Provided smart code navigation, refactoring, and inline AI chat for clarifying requirements and debugging issues.
+- **Coderabbit**: Offered conversational assistance and code reviews to improve reliability.
+- **Google Gemini**: Enabled advanced code generation and documentation drafting, with generous free API keys for experimentation and integration.
+
+All AI-generated code and suggestions were reviewed and iterated for correctness, security, and maintainability.
