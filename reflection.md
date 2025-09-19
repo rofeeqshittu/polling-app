@@ -21,3 +21,5 @@ The experience reinforced the importance of human oversight in AI-assisted devel
 ## Final Thoughts
 
 AI tools like Copilot, Cursor, Zed, Coderabbit, and Gemini are invaluable for modern web development, enabling rapid prototyping and reducing cognitive load. However, they are not a substitute for thoughtful design, thorough testing, and domain expertise. Pollify’s build process was a collaborative effort between human creativity and a diverse set of AI assistants, resulting in a robust, maintainable, and user-friendly polling application.
+...
+- 
