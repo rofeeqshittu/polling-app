@@ -30,18 +30,20 @@ export default function DashboardPage() {
     if (!user) return;
     setLoading(true);
     setError(null);
-    supabase
-      .from("polls")
-      .select("*, options(*)")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false })
-      .then(({ data, error }) => {
-        if (error) {
-          setError("Failed to fetch polls.");
+    fetch(`/api/polls?userId=${user.id}`)
+      .then(res => res.json())
+      .then(data => {
+        if (!data.success) {
+          setError(data.error || "Failed to fetch polls.");
           setPolls([]);
         } else {
-          setPolls(data || []);
+          setPolls(data.data || []);
         }
+        setLoading(false);
+      })
+      .catch(err => {
+        setError("Failed to fetch polls.");
+        setPolls([]);
         setLoading(false);
       });
   }, [user]);
